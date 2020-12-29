@@ -1,56 +1,48 @@
 <?php
 
-namespace App\Http\Controllers;
-
+namespace App\Http\Controllers\admin;
+use App\User;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Auth;
-use App\Admin;
-
+use Session;
 
 class LoginController extends Controller
 {
-
-    public function __construct()
-    {
-        $this->middleware('guest')->except('logout');
+    //
+    public function index(){
+        //
+        if(empty(Auth::id())){
+            return view('admin.auth.login');
+        }else{
+            return redirect()->intended('/home');
+        }
     }
 
-     public function index()
-    {
-        return view('auth.login');
+    public function loginpost(Request $request){
+        //
+        request()->validate([
+            'email' => 'required',
+            'password' => 'required',
+        ]);
+ 
+        $credentials = $request->only('email', 'password');
+        if (Auth::attempt($credentials)) {
+            //
+            if(Auth::user()->userType == "admin"){
+                //
+                return redirect()->intended('/home');
+            }else{
+                //
+                return redirect()->back()->withInput()->with('error','Invalid Crendentials');
+            }
+        }
+        return redirect()->back()->withInput()->with('error','Invalid Crendentials');
     }
-    
-    public function loginpost(Request $request)
-    {	
-		
-    $request->validate([
-    		'username' => ['required'],
-    		'password' => ['required'],
-    	]);
-
-
-    	if (auth()->guard()->attempt($request->only('username', 'password'))):
-    		  $user = auth()->guard()->user();
-        	$user->remember_token = bin2hex(openssl_random_pseudo_bytes(30));
-        	$user->save();
-   			
-   				      
-   		return redirect()->intended("/");
-   		else:
-   			return redirect()->back()->withInput()->with('error','Invalid Crendentials');
-   		endif;
-
-
-    }
-
-
 
     public function logout(){
-
-    	Auth::guard()->logout();
-    	return redirect("login");
-
+        //
+        Auth::logout();
+    	return redirect("/admin");
     }
-
-    
 }
